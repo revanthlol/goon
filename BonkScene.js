@@ -9,6 +9,8 @@ export default class BonkScene extends Scene {
     this.backgroundColor = "#333";
     this.containerColor = "#222";
     this.entities = [];
+    this.hue = 0; // NEW: Property to track the rainbow animation state
+
     const image = new Image();
     
     image.onload = () => {
@@ -26,7 +28,7 @@ export default class BonkScene extends Scene {
     const direction = Random.integerValue(0, 1);
     const scale = Random.integerValue(4, 16);
     const opacity = Random.floatValue(0.1, 1);
-    const speed = Random.integerValue(400, 1000) * (direction ? 1 : -1);    
+    const speed = Random.integerValue(400, 1000) * (direction ? 1 : -1);
     
     const size = {
         width: frame.width * scale,
@@ -63,22 +65,47 @@ export default class BonkScene extends Scene {
       ctx.fillRect(j, 0, 10, height);
     }
     
-    // Draw Main Text
+    // ----- MODIFIED: Draw Main Text with Animated Gradient -----
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "white";
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 10;
-    ctx.font = `bold ${width/15}px sans-serif`;
+    
+    // Set font properties
+    const fontSize = width / 15;
+    ctx.font = `bold ${fontSize}px sans-serif`;
     ctx.textAlign = "center";
+    ctx.lineWidth = 10;
     
-    const textY = height / 2 - (width / 15);
+    // Text and positions
+    const line1 = "GO TO";
+    const line2 = "HORNY JAIL";
     const textX = width / 2;
-    ctx.strokeText("GO TO HORNY JAIL ", textX, textY);
-    ctx.fillText("GO TO HORNY JAIL ", textX, textY);
+    const y1 = height / 2 - fontSize * 0.2; // Adjusted position slightly for centering
+    const y2 = y1 + fontSize * 1.1;
+
+    // Create the animated rainbow gradient
+    const textWidth = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
+    const gradient = ctx.createLinearGradient(textX - textWidth / 2, 0, textX + textWidth / 2, 0);
+
+    const hueOffset = 40; // Spacing between colors in the rainbow
+    gradient.addColorStop(0,       `hsl(${this.hue + (hueOffset * 0)}, 100%, 60%)`);
+    gradient.addColorStop(0.2,     `hsl(${this.hue + (hueOffset * 1)}, 100%, 60%)`);
+    gradient.addColorStop(0.4,     `hsl(${this.hue + (hueOffset * 2)}, 100%, 60%)`);
+    gradient.addColorStop(0.6,     `hsl(${this.hue + (hueOffset * 3)}, 100%, 60%)`);
+    gradient.addColorStop(0.8,     `hsl(${this.hue + (hueOffset * 4)}, 100%, 60%)`);
+    gradient.addColorStop(1,       `hsl(${this.hue + (hueOffset * 5)}, 100%, 60%)`);
     
-    ctx.strokeText("LMAO XD", textX, textY + (width / 15));
-    ctx.fillText("LMAO XD", textX, textY + (width / 15));
+    // Apply the gradient outline and white fill
+    ctx.strokeStyle = gradient;
+    ctx.fillStyle = "white";
+
+    // Draw first line
+    ctx.strokeText(line1, textX, y1);
+    ctx.fillText(line1, textX, y1);
     
+    // Draw second line
+    ctx.strokeText(line2, textX, y2);
+    ctx.fillText(line2, textX, y2);
+    // ----- End of Modified Section -----
+
     // Draw inmate entities
     for(const entity of this.entities) {
       ctx.globalAlpha = entity.opacity;
@@ -87,6 +114,11 @@ export default class BonkScene extends Scene {
   }
 
   update(dt) {
+    // NEW: Animate the hue value for the rainbow gradient
+    const hueSpeed = 60; // Degrees to shift per second
+    this.hue = (this.hue + hueSpeed * dt) % 360; // Increment and wrap around 360
+    
+    // Original update logic below
     this.elapsedTime += dt;
     if (this.elapsedTime >= 0.4) {
       this.elapsedTime = 0;
