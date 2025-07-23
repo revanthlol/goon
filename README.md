@@ -7,6 +7,6 @@
 [![Open Goon App](https://img.shields.io/badge/Open%20Goon%20App-Live%20Now-orange?style=for-the-badge&logo=vercel)](https://goon-gold.vercel.app/)
 
 
-# 🚀 [Visit Goon Gold 🚀](https://goon-gold.vercel.app/)
+#  [CLICK HERE ](https://goon-gold.vercel.app/)
 
 [![Live Site](https://img.shields.io/badge/GOON-GOLD-FF69B4?style=for-the-badge&logo=vercel)](https://goon-gold.vercel.app/)
