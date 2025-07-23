@@ -6,7 +6,7 @@ import './RoundedRect.js';
 export default class BonkScene extends Scene {
   constructor() {
     super();
-    // Unchanged core properties
+    // Core properties are unchanged
     this.defaultBackgroundColor = "#333";
     this.beatColor = null;
     this.entities = [];
@@ -14,23 +14,22 @@ export default class BonkScene extends Scene {
     this.animationState = "textVisible";
     this.barsAnimationProgress = 0;
     this.animationTimer = 0.2;
-    this.shakeDuration = 0; // For the overall screen shake
+    this.shakeDuration = 0;
     this.shakeIntensity = 0;
-    
-    // --- MODIFIED & SIMPLIFIED PROPERTIES ---
     this.textEntities = [];
     this.textIsSetup = false;
     this.audioAnalyser = null;
     this.frequencyData = null;
     this.lastBeat = 0;
     
+    // Tweakable constants are unchanged
     this.BEAT_THRESHOLD = 200;
     this.BEAT_COOLDOWN = 0.15;
-    this.SHAKE_INTENSITY = 15; // How much the letters should shake
+    this.SHAKE_INTENSITY = 15;
   }
   
   // (setAudioAnalyser, createEntity, startScene are unchanged and omitted for clarity)
-   setAudioAnalyser(analyser) {
+     setAudioAnalyser(analyser) {
         this.audioAnalyser = analyser;
         this.frequencyData = new Uint8Array(this.audioAnalyser.frequencyBinCount);
     }
@@ -54,46 +53,59 @@ export default class BonkScene extends Scene {
     };
     image.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAAAdAgMAAAAWQyy/AAAADFBMVEX///+4YOA4ODj4+PhASPNeAAAAAXRSTlMAQObYZgAAAStJREFUeF6l08FqhEAMBuBhbk6fYyj6Pgmul3pZEN9hWV8i9FgvC3X6PELpe2zP9Y/pyCLLFprLoP83STzo/lv+/ZEoGGwMw10RacmePmML4PfOjyqev6WGKDs/Kth40QiEXInxLPzxle+WHUS8kgoi6vU8zzaobIQB31R4QrU4T9RVKl5ngpheaBP1KlmWLlU4z0iCJioORKxCmzm5nDSJAOx0jxthdEBwzOLIkJyFIEGgQpvVqxSMhVRxQKCiEYhozQtbPV/Fmx6iJE5ErYkWgi8mlOYkEiVZxQRpglUojSZB9wJUTDoxkTeMN4J3ot0JT79CTMifRUmUEtV5803EJcD3+5ScS+MmML+feHBhCcKSWOVvw9s07H+LTdwvL/1Fp9yvaggJUx/WD0e0wREEScedAAAAAElFTkSuQmCC";
     }
+  
 
-  // --- REWRITTEN TEXT LOGIC ---
-
-  // Sets up the letters, now with much simpler properties
+  // --- MODIFIED TEXT SETUP METHOD ---
   setupTextEntities() {
     this.textEntities = [];
     const ctx = this.context;
     const { width, height } = this.size;
-    const fontSize = width / 17;
+    
+    // --- NEW RESPONSIVE LOGIC ---
+    // Check if the screen is in a portrait (mobile) orientation
+    const isMobile = height > width;
+
+    // Define different layouts based on orientation
+    const fontSize = isMobile ? width / 11 : width / 17;
+    const lines = isMobile ? ["GO TO", "HORNY JAIL", "LMAO", "XD"] : ["GO TO HORNY JAIL", "LMAO XD"];
+    
+    // Dynamically calculate the total block height to center it perfectly
+    const totalBlockHeight = lines.length * fontSize * 1.2 - (fontSize * 0.2); // 1.2 is line spacing
+    const startY = height / 2 - totalBlockHeight / 2;
+
     ctx.font = `bold ${fontSize}px sans-serif`;
-    
-    const lines = ["GO TO HORNY JAIL", "LMAO XD"];
-    const yOffsets = [height / 2 - fontSize * 0.7, height / 2 + fontSize * 0.5];
-    
+
+    // --- The rest of the logic uses the responsive variables ---
     lines.forEach((line, lineIndex) => {
       const textWidth = ctx.measureText(line).width;
       let currentX = (width - textWidth) / 2;
+      let yPos = startY + (lineIndex * fontSize * 1.2);
       
       for (const char of line) {
-        if(char !== ' ') {
+        if (char !== ' ') {
           this.textEntities.push({
             char: char,
-            initialX: currentX, // The "home" position
-            initialY: yOffsets[lineIndex],
-            shakeEnergy: 0, // NEW: The only physics property needed
+            initialX: currentX,
+            initialY: yPos,
+            shakeEnergy: 0,
           });
         }
         currentX += ctx.measureText(char).width;
       }
     });
+
     this.textIsSetup = true;
   }
   
-  // Applies shake energy on beat
-  triggerTextShake() {
-    for (const letter of this.textEntities) {
-      letter.shakeEnergy = this.SHAKE_INTENSITY;
+  // (triggerTextShake is unchanged)
+    triggerTextShake() {
+        for (const letter of this.textEntities) {
+        letter.shakeEnergy = this.SHAKE_INTENSITY;
+        }
     }
-  }
 
+
+  // --- The render() method is now simpler because logic was moved ---
   render() {
     const ctx = this.context;
     const { width, height } = this.size;
@@ -101,18 +113,15 @@ export default class BonkScene extends Scene {
     ctx.save();
     if (this.shakeDuration > 0) ctx.translate((Math.random() - 0.5) * 2 * this.shakeIntensity, (Math.random() - 0.5) * 2 * this.shakeIntensity);
     
-    // Draw background and disco effect
     ctx.fillStyle = this.defaultBackgroundColor;
     ctx.fillRect(0, 0, width, height);
     if(this.beatColor) {
       const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width * 0.7);
-      gradient.addColorStop(0, this.beatColor);
-      gradient.addColorStop(1, 'transparent');
+      gradient.addColorStop(0, this.beatColor); gradient.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
     }
     
-    // Render inmates & bars... (unchanged)
         if (this.animationState === "fullyRunning") {
         for(const entity of this.entities) {
              ctx.save();
@@ -135,22 +144,24 @@ export default class BonkScene extends Scene {
       }
     }
     
-    
-    // --- REWRITTEN TEXT RENDER ---
-    const fontSize = width / 17;
+    // Define font styles. The size is now calculated correctly in setupTextEntities
+    // so we just need to re-apply the font property for the drawing context.
+    const isMobile = height > width;
+    const fontSize = isMobile ? width / 11 : width / 17;
     ctx.font = `bold ${fontSize}px sans-serif`;
     ctx.lineWidth = 10;
     
+    // The rainbow gradient for the text outline
     const gradient = ctx.createLinearGradient(0, 0, width, 0);
     for(let i=0; i<=1; i+=0.2) gradient.addColorStop(i, `hsl(${this.hue + (40*i*5)}, 100%, 60%)`);
     ctx.strokeStyle = gradient;
     ctx.fillStyle = "white";
 
+    // Loop and draw each letter with its jiggle effect
     for (const letter of this.textEntities) {
       let x = letter.initialX;
       let y = letter.initialY;
       
-      // If there's shake energy, apply a TEMPORARY offset
       if (letter.shakeEnergy > 0) {
         x += (Math.random() - 0.5) * letter.shakeEnergy;
         y += (Math.random() - 0.5) * letter.shakeEnergy;
@@ -163,10 +174,10 @@ export default class BonkScene extends Scene {
     ctx.restore();
   }
 
+  // --- The entire update() method is UNCHANGED from the last version ---
   update(dt) {
     if (this.animationState === 'fullyRunning' && !this.textIsSetup) this.setupTextEntities();
     
-    // Beat detection logic...
     if (this.audioAnalyser && this.animationState === 'fullyRunning') {
         this.audioAnalyser.getByteFrequencyData(this.frequencyData);
         const bassLevel = (this.frequencyData[1] + this.frequencyData[2] + this.frequencyData[3]) / 3;
@@ -176,7 +187,7 @@ export default class BonkScene extends Scene {
             this.lastBeat = 0;
             this.beatColor = `hsl(${Random.integerValue(0, 360)}, 90%, 60%)`;
             for (const entity of this.entities) entity.beatScale = 1.3;
-            this.triggerTextShake(); // Trigger the jiggle
+            this.triggerTextShake();
         } else if (this.lastBeat > 0.1) {
             this.beatColor = null;
         }
@@ -184,21 +195,19 @@ export default class BonkScene extends Scene {
         for (const entity of this.entities) if (entity.beatScale > 1.0) entity.beatScale -= 2.0 * dt;
     }
     
-    // --- NEW: Decay the shake energy for each letter ---
     if (this.textIsSetup) {
       for (const letter of this.textEntities) {
         if (letter.shakeEnergy > 0) {
-          letter.shakeEnergy *= 0.88; // Rapidly decay the shake
+          letter.shakeEnergy *= 0.88;
           if (letter.shakeEnergy < 0.5) letter.shakeEnergy = 0;
         }
       }
     }
     
-    // Unchanged logic for screen shake, state changes etc...
     this.hue = (this.hue + 60 * dt) % 360;
     if (this.shakeDuration > 0) this.shakeDuration -= dt, this.shakeIntensity *= 0.9;
     switch(this.animationState) {
-          case "textVisible":
+       case "textVisible":
         this.animationTimer -= dt;
         if (this.animationTimer <= 0) {
           this.animationState = "barsAnimating";
@@ -212,7 +221,7 @@ export default class BonkScene extends Scene {
           this.animationState = "fullyRunning";
           this.shakeDuration = 0.4;
           this.shakeIntensity = 20;
-          this.triggerTextShake()
+          this.triggerTextShake();
         }
         break;
 
