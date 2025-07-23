@@ -3,8 +3,6 @@ import BonkScene from './BonkScene.js';
 class MainController {
   constructor(container) {
     this.container = container;
-
-    // Setup the scene:
     const scene = new BonkScene();
     scene.element.style.display = "none";
     container.appendChild(scene.element);
@@ -12,28 +10,51 @@ class MainController {
     this.scene = scene;
     this.handleResize();
 
-    // Setup loading:
     const loadingElement = document.createElement("span");
     loadingElement.textContent = "Verifying...";
-
-    // Audio:
     const audioPlayer = document.getElementsByTagName("audio")[0];
+
+    // --- NEW: Web Audio API Setup ---
+    let audioContext, analyser;
+    const setupAudio = () => {
+        // Create audio context only once
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaElementSource(audioPlayer);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 64; // Low resolution is fine for this
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            // Pass the analyser to the scene
+            scene.setAudioAnalyser(analyser);
+        }
+    };
+    // --- End of New Section ---
+
     audioPlayer.addEventListener("play", () => {
+      // Setup audio on first play
+      setupAudio();
+
       loadingElement.parentNode.removeChild(loadingElement);
-      scene.element.classList.add("cue-in");
       scene.element.style.display = "block";
+      scene.startScene();
       document.title = "BONK!";
     });
 
-    // Button:
     const button = document.createElement("button");
-    button.textContent = "I am 18+ and wish to enter 🌶️💦👀 ";
+    button.textContent = "I am 18+ and wish to enter 🌶️💦👀";
     button.addEventListener("click", () => {
+      // On some browsers, AudioContext must be started after a user action.
+      // Resume it here if it's suspended.
+      if (audioContext && audioContext.state === 'suspended') {
+          audioContext.resume();
+      }
       button.parentNode.removeChild(button);
       container.appendChild(loadingElement);
       audioPlayer.play();
     });
-
+    
     container.appendChild(button);
   }
 
